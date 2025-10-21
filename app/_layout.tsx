@@ -1,9 +1,10 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments, useRootNavigationState } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import type { PropsWithChildren } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -11,14 +12,27 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+// Workaround for TS editor complaining about missing `children` on Providers
+const AuthProviderW = ({ children }: PropsWithChildren) => (
+  <AuthProvider children={children} />
+);
+const CartProviderW = ({ children }: PropsWithChildren) => (
+  <CartProvider children={children} />
+);
+
 function RootLayoutNav() {
   const { currentUser, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
   const [isNavigating, setIsNavigating] = React.useState(false);
 
+  const didRedirect = React.useRef(false);
+
   useEffect(() => {
-    if (isLoading) return;
+    // Wait until auth, navigation, and initial segments are ready
+  if (isLoading || !navigationState?.key || !segments[0]) return;
+    if (didRedirect.current) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === '(admin)' || segments[0] === '(pharmacy)' || segments[0] === '(delivery)';
 
@@ -31,6 +45,7 @@ function RootLayoutNav() {
     // Not logged in but trying to access protected routes
     if (!currentUser && inAuthGroup) {
       console.log('🚪 Redirecting to login - no user');
+      didRedirect.current = true;
       setIsNavigating(true);
       router.replace('/login');
       setTimeout(() => setIsNavigating(false), 100);
@@ -48,6 +63,7 @@ function RootLayoutNav() {
       // If not in correct group or not in any auth group, redirect to correct dashboard
       if (!correctGroup || !inAuthGroup) {
         console.log('🔄 Redirecting to correct role group:', currentUser.role);
+        didRedirect.current = true;
         setIsNavigating(true);
         switch (currentUser.role) {
           case 'admin':
@@ -65,10 +81,10 @@ function RootLayoutNav() {
         setTimeout(() => setIsNavigating(false), 100);
       }
     }
-  }, [currentUser, segments, isLoading, router]);
+  }, [currentUser, segments, isLoading, router, navigationState?.key]);
 
   // Show nothing while loading or navigating to prevent flicker
-  if (isLoading || isNavigating) {
+  if (isLoading || isNavigating || !navigationState?.key) {
     return null;
   }
 
@@ -92,11 +108,11 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView>
-        <AuthProvider>
-          <CartProvider>
+        <AuthProviderW>
+          <CartProviderW>
             <RootLayoutNav />
-          </CartProvider>
-        </AuthProvider>
+          </CartProviderW>
+        </AuthProviderW>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
