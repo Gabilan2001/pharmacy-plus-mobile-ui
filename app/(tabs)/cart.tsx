@@ -1,10 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image, Modal, ActivityIndicator, Pressable } from 'react-native';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
-import { Trash2, Plus, Minus, Tag } from 'lucide-react-native';
-import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { useRouter } from 'expo-router';
+import { Minus, Plus, Tag, Trash2 } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function CartScreen() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, applyCouponAsync, removeCoupon, appliedCoupon, getDiscountAmount, getFinalTotal, placeOrder } = useCart();
@@ -262,19 +262,21 @@ export default function CartScreen() {
           <Pressable style={StyleSheet.absoluteFill} onPress={() => !submitting && setConfirmVisible(false)} />
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Confirm Order</Text>
-            <View style={{ marginTop: 12 }}>
+            <View style={{ marginTop: 16 }}>
               <Text style={styles.modalLabel}>Delivery Address</Text>
               <TextInput
-                style={[styles.input, { marginTop: 8 }]}
-                placeholder="Enter delivery address"
+                style={[styles.input, styles.addressInput]}
+                placeholder="Enter your full delivery address including street, city, and postal code"
                 placeholderTextColor={Colors.text.light}
                 value={addressInput}
                 onChangeText={setAddressInput}
                 editable={!submitting}
                 multiline
+                numberOfLines={4}
+                textAlignVertical="top"
               />
             </View>
-            <View style={{ marginTop: 12 }}>
+            <View style={styles.orderSummary}>
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Items</Text>
                 <Text style={styles.totalValue}>{cartItems.length}</Text>
@@ -284,23 +286,23 @@ export default function CartScreen() {
                 <Text style={styles.finalTotalValue}>${getFinalTotal().toFixed(2)}</Text>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+            <View style={styles.modalButtonContainer}>
               <TouchableOpacity
-                style={[styles.checkoutButton, { backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, flex: 1 }]}
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => !submitting && setConfirmVisible(false)}
                 disabled={submitting}
               >
-                <Text style={[styles.checkoutButtonText, { color: Colors.text.primary }]}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.checkoutButton, { flex: 1 }]}
+                style={[styles.modalButton, styles.confirmButton]}
                 onPress={confirmPlaceOrder}
                 disabled={submitting}
               >
                 {submitting ? (
                   <ActivityIndicator color={Colors.white} />
                 ) : (
-                  <Text style={styles.checkoutButtonText}>{payMethod === 'card' ? 'Pay' : 'Confirm'}</Text>
+                  <Text style={styles.confirmButtonText}>{payMethod === 'card' ? 'Pay' : 'Confirm'}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -319,30 +321,34 @@ export default function CartScreen() {
           <Pressable style={StyleSheet.absoluteFill} onPress={() => !cardProcessing && setCardModalVisible(false)} />
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Card Payment</Text>
-            <Text style={{ color: Colors.text.secondary, marginTop: 4 }}>
+            <Text style={{ color: Colors.text.secondary, marginTop: 4, fontSize: 13 }}>
               For testing, use Stripe test cards like 4242 4242 4242 4242, any CVC, any future date.
             </Text>
-            <View style={{ marginTop: 12, gap: 10 }}>
-              <Text style={styles.modalLabel}>Name on card</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="John Doe"
-                placeholderTextColor={Colors.text.light}
-                value={cardName}
-                onChangeText={setCardName}
-                editable={!cardProcessing}
-              />
-              <Text style={styles.modalLabel}>Card number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="4242 4242 4242 4242"
-                placeholderTextColor={Colors.text.light}
-                value={cardNumber}
-                onChangeText={(t) => setCardNumber(t.replace(/[^\d\s]/g, ''))}
-                keyboardType="numeric"
-                editable={!cardProcessing}
-              />
-              <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ marginTop: 16, gap: 12 }}>
+              <View>
+                <Text style={styles.modalLabel}>Name on card</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="John Doe"
+                  placeholderTextColor={Colors.text.light}
+                  value={cardName}
+                  onChangeText={setCardName}
+                  editable={!cardProcessing}
+                />
+              </View>
+              <View>
+                <Text style={styles.modalLabel}>Card number</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="4242 4242 4242 4242"
+                  placeholderTextColor={Colors.text.light}
+                  value={cardNumber}
+                  onChangeText={(t) => setCardNumber(t.replace(/[^\d\s]/g, ''))}
+                  keyboardType="numeric"
+                  editable={!cardProcessing}
+                />
+              </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.modalLabel}>Expiry (MM/YY)</Text>
                   <TextInput
@@ -370,23 +376,23 @@ export default function CartScreen() {
                 </View>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+            <View style={styles.modalButtonContainer}>
               <TouchableOpacity
-                style={[styles.checkoutButton, { backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, flex: 1 }]}
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => !cardProcessing && setCardModalVisible(false)}
                 disabled={cardProcessing}
               >
-                <Text style={[styles.checkoutButtonText, { color: Colors.text.primary }]}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.checkoutButton, { flex: 1 }]}
+                style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleCardSubmit}
                 disabled={cardProcessing}
               >
                 {cardProcessing ? (
                   <ActivityIndicator color={Colors.white} />
                 ) : (
-                  <Text style={styles.checkoutButtonText}>Continue</Text>
+                  <Text style={styles.confirmButtonText}>Continue</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -608,7 +614,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 16,
+    padding: 20,
+    paddingBottom: 24,
+    maxHeight: '85%',
   },
   modalTitle: {
     fontSize: 18,
@@ -617,6 +625,53 @@ const styles = StyleSheet.create({
   },
   modalLabel: {
     fontSize: 14,
+    fontWeight: '600' as const,
     color: Colors.text.secondary,
+    marginBottom: 8,
+  },
+  addressInput: {
+    minHeight: 120,
+    maxHeight: 150,
+    paddingTop: 12,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  orderSummary: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+    marginBottom: 8,
+    paddingBottom: 8,
+  },
+  modalButton: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cancelButtonText: {
+    color: Colors.text.primary,
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  confirmButton: {
+    backgroundColor: Colors.primary,
+  },
+  confirmButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '600' as const,
   },
 });

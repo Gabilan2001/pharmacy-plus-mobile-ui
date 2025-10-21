@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
-import { Package, Clock, Truck, CheckCircle } from 'lucide-react-native';
-import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { Order } from '@/types';
+import { useFocusEffect } from '@react-navigation/native';
+import { CheckCircle, Clock, Package, Truck } from 'lucide-react-native';
+import { useCallback, useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function OrdersScreen() {
   const { updateOrderStatus } = useCart();
@@ -36,9 +37,12 @@ export default function OrdersScreen() {
     }
   }, [currentUser, apiRequest]);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  // Refresh orders when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders();
+    }, [fetchOrders])
+  );
 
   if (!currentUser) return null;
 
