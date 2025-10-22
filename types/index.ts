@@ -37,11 +37,6 @@ export type Medicine = {
   image: string;
   pharmacyId: string;
   category: string;
-  manufacturer?: string;
-  expiryDate?: string;
-  isNearExpiry?: boolean;
-  isExpired?: boolean;
-  _id?: string;
 };
 
 export type CartItem = {
@@ -55,7 +50,7 @@ export type Order = {
   id: string;
   customerId: string;
   pharmacyId: string;
-  items: { medicineId: string; quantity: number; price: number; name: string,manufacturer?: string;expiryDate?: string; }[];
+  items: { medicineId: string; quantity: number; price: number; name: string }[];
   totalAmount: number;
   status: OrderStatus;
   deliveryAddress: string;
